@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>右下角聊天机器人示例</title>
+    <style>
+        /* ==================== 1. 聊天图标（固定在右下角） ==================== */
+        .chat-icon {
+            position: fixed; /* 固定在视口中 */
+            bottom: 20px;    /* 距离底部 20px */
+            right: 20px;     /* 距离右侧 20px */
+            width: 60px;     /* 图标宽度 */
+            height: 60px;    /* 图标高度 */
+            background-color: #4CAF50; /* 绿色背景 */
+            color: white;              /* 文字颜色 */
+            border-radius: 50%;        /* 变成圆形 */
+            text-align: center;
+            line-height: 60px;
+            font-size: 24px;
+            cursor: pointer;           /* 鼠标悬停变手型 */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 阴影效果 */
+            z-index: 1000;             /* 确保它在最上层 */
+            transition: transform 0.3s ease;
+            font-family: Arial, sans-serif;
+        }
+
+        .chat-icon:hover {
+            transform: scale(1.05); /* 悬停时稍微放大 */
+        }
+
+        /* ==================== 2. 聊天对话框样式 ==================== */
+        .chat-window {
+            position: fixed;
+            bottom: 100px; /* 放在图标上方 */
+            right: 20px;
+            width: 350px;
+            height: 450px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            /* 默认隐藏，通过 JavaScript 控制显示/隐藏 */
+            display: none; 
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 标题栏 */
+        .chat-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 关闭按钮 */
+        .close-btn {
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* 聊天内容区域 */
+        .chat-body {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto; /* 允许滚动 */
+            background-color: #f7f7f7;
+        }
+        
+        /* 聊天输入框 */
+        .chat-input {
+            padding: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+        }
+
+        .chat-input input[type="text"] {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .chat-input button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* 示例聊天气泡样式 */
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            max-width: 80%;
+            clear: both; /* 清除浮动 */
+        }
+
+        .user-message {
+            background-color: #dcf8c6;
+            float: right;
+            margin-left: auto;
+        }
+
+        .ai-message {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            float: left;
+            margin-right: auto;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>欢迎来到我的网站！</h1>
+    <p>这是一个实时预览的聊天机器人示例页面。请点击右下角的图标。</p>
+    <div style="height: 1000px; background-color: #f0f0f0; padding: 20px;">
+        向下滚动... 聊天图标应该保持在右下角。
+    </div>
+
+    <div class="chat-icon" id="chatIcon">
+        💬
+    </div>
+
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <span>AI 智能客服</span>
+            <span class="close-btn" id="closeBtn">&times;</span>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="message ai-message">您好！我是 AI 客服，请问有什么可以帮您？</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="输入您的问题...">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        // 获取 HTML 元素
+        const chatIcon = document.getElementById('chatIcon');
+        const chatWindow = document.getElementById('chatWindow');
+        const closeBtn = document.getElementById('closeBtn');
+        const chatBody = document.getElementById('chatBody');
+        const userInput = document.getElementById('userInput');
+
+        // 绑定点击事件：打开聊天窗口
+        chatIcon.addEventListener('click', () => {
+            // 将 display: none 切换为 display: flex
+            chatWindow.style.display = 'flex';
+        });
+
+        // 绑定点击事件：关闭聊天窗口
+        closeBtn.addEventListener('click', () => {
+            chatWindow.style.display = 'none';
+        });
+
+        // 绑定回车键事件：发送消息
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // 模拟发送消息的函数
+       function sendMessage() {
+    // ... (获取用户消息，显示用户消息，清空输入框) ...
+
+    const messageText = userInput.value.trim();
+    if (messageText === '') return;
+    appendMessage(messageText, 'user-message');
+    userInput.value = '';
+
+    // 使用 Fetch API 向您的 Flask API 发送请求
+    fetch('http://127.0.0.1:5000/api/chat', { // **注意：这里假设您的 Flask 运行在 5000 端口**
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: messageText })
+    })
+    .then(response => response.json()) // 将响应解析为 JSON 格式
+    .then(data => {
+        // 成功获取 AI 回复
+        const aiReply = data.response; // 假设后端返回的 JSON 结构是 { "response": "..." }
+        appendMessage(aiReply, 'ai-message');
+    })
+    .catch(error => {
+        // 处理错误（例如服务器未启动或 API 调用失败）
+        console.error('API 调用失败:', error);
+        appendMessage('抱歉，连接服务器失败，请稍后再试。', 'ai-message');
+    });
+}
+
+       
+        function appendMessage(text, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.textContent = text;
+            chatBody.appendChild(messageDiv);
+
+            
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+    </script>
+</body>
+</html>
