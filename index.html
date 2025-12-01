@@ -5,14 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AiKang AI service</title>
     <style>
-        /* ==================== 1. 聊天图标（固定在右下角） ==================== */
-        .chat-icon {
-            position: fixed !important; /* 确保定位模式 */
+        /* 强制覆盖定位和颜色 */
+
+        /* 使用ID选择器提高优先级，并强制ltr方向 */
+        #chatIcon {
+            position: fixed !important; 
             bottom: 20px !important;    
-            right: 20px !important;     /* 强制在右侧 */
+            right: 20px !important;    
+            left: auto !important; /* 明确禁用左侧定位 */
+            direction: ltr !important; /* 强制左到右方向 */
             width: 60px;     
             height: 60px;    
-            background-color: #4CAF50 !important; /* 强制绿色 */
+            background-color: #4CAF50 !important; 
             color: white;              
             border-radius: 50%;        
             text-align: center;
@@ -29,11 +33,13 @@
             transform: scale(1.05); 
         }
 
-        /* ==================== 2. 聊天对话框样式 ==================== */
-        .chat-window {
+        /* 强制覆盖定位和颜色 */
+        #chatWindow {
             position: fixed !important;
             bottom: 100px !important; 
-            right: 20px !important; /* 强制在右侧，与图标对齐 */
+            right: 20px !important; 
+            left: auto !important; /* 明确禁用左侧定位 */
+            direction: ltr !important; /* 强制左到右方向 */
             width: 350px;
             height: 450px;
             background-color: white;
@@ -48,7 +54,7 @@
         
         /* 标题栏 */
         .chat-header {
-            background-color: #4CAF50 !important; /* 强制绿色 */
+            background-color: #4CAF50 !important; 
             color: white;
             padding: 15px;
             font-size: 16px;
@@ -90,7 +96,7 @@
         }
 
         .chat-input button {
-            background-color: #4CAF50 !important; /* 强制绿色 */
+            background-color: #4CAF50 !important; 
             color: white;
             border: none;
             padding: 8px 15px;
