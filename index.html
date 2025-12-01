@@ -142,99 +142,98 @@
         </div>
     </div>
 
-    <script>
-        // 获取 HTML 元素
-        const chatIcon = document.getElementById('chatIcon');
-        const chatWindow = document.getElementById('chatWindow');
-        const closeBtn = document.getElementById('closeBtn');
-        const chatBody = document.getElementById('chatBody');
-        const userInput = document.getElementById('userInput');
-        const sendButton = document.querySelector('.chat-input button');
-        
-        // 标记：防止多次发送
-        let isSending = false; 
+  <script>
+    const chatIcon = document.getElementById('chatIcon');
+    const chatWindow = document.getElementById('chatWindow');
+    const closeBtn = document.getElementById('closeBtn');
+    const chatBody = document.getElementById('chatBody');
+    const userInput = document.getElementById('userInput');
 
-        // 绑定点击事件：打开聊天窗口
-        chatIcon.addEventListener('click', () => {
-            chatWindow.style.display = 'flex';
-            userInput.focus(); // 聚焦输入框
-        });
+    let isSending = false;
 
-        // 绑定点击事件：关闭聊天窗口
-        closeBtn.addEventListener('click', () => {
-            chatWindow.style.display = 'none';
-        });
+    chatIcon.addEventListener('click', () => {
+        chatWindow.style.display = 'flex';
+        userInput.focus();
+    });
 
-        // 绑定回车键事件：发送消息
-        userInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                sendMessage();
+    closeBtn.addEventListener('click', () => {
+        chatWindow.style.display = 'none';
+    });
+
+    userInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    function appendMessage(text, className) {
+        const div = document.createElement('div');
+        div.className = `message ${className}`;
+        div.innerHTML = text;
+        chatBody.appendChild(div);
+        chatBody.scrollTop = chatBody.scrollHeight;
+        return div;
+    }
+
+    // =====================================
+    // 🚀 支持流式回复的核心函数
+    // =====================================
+    async function sendMessage() {
+        if (isSending) return;
+
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        isSending = true;
+        userInput.disabled = true;
+
+        // 显示用户消息
+        appendMessage(text, "user-message");
+        userInput.value = '';
+
+        // 创建 AI 消息框（空的）
+        const aiDiv = appendMessage("", "ai-message");
+
+        try {
+            // 使用 ReadableStream 方式 Fetch 流式回复
+            const response = await fetch("https://ai-chat-bot-in-website.onrender.com/api/chat-stream", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ message: text })
+            });
+
+            if (!response.ok) {
+                throw new Error("HTTP error " + response.status);
             }
-        });
-        
-        // 辅助函数：添加消息到聊天体
-        function appendMessage(text, className) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${className}`;
-            
-            // 使用 innerHTML 来处理换行符等基本格式
-            messageDiv.innerHTML = text.replace(/\n/g, '<br>'); 
 
-            chatBody.appendChild(messageDiv);
-            chatBody.scrollTop = chatBody.scrollHeight; // 自动滚动
-        }
+            // 读取流
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let aiText = "";
 
-        // 核心函数：发送消息到 Render API
-        async function sendMessage() {
-            const messageText = userInput.value.trim();
-            if (messageText === '' || isSending) return; 
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-            // 1. 状态管理：禁用输入和发送
-            isSending = true;
-            userInput.disabled = true;
-            sendButton.disabled = true;
-            
-            // 2. 显示用户消息
-            appendMessage(messageText, 'user-message');
-            userInput.value = ''; 
+                const chunk = decoder.decode(value, { stream: true });
+                aiText += chunk;
 
-            try {
-                // 3. 使用 Fetch API 调用 Render 后端 API
-                const response = await fetch('https://ai-chat-bot-in-website.onrender.com/api/chat', { // **使用 Render 公开 URL**
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message: messageText })
-                });
-
-                // 4. 检查 HTTP 状态
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                
-                const data = await response.json(); 
-                
-                // 5. 显示 AI 回复
-                const aiReply = data.response || "抱歉，AI 返回了空回复。";
-                appendMessage(aiReply, 'ai-message');
-
-            } catch (error) {
-                // 6. 处理错误
-                console.error('API 调用失败:', error);
-                appendMessage('抱歉，服务器连接失败或 Grok API 发生错误。请检查控制台。', 'ai-message');
-            } finally {
-                // 7. 恢复状态
-                isSending = false;
-                userInput.disabled = false;
-                sendButton.disabled = false;
-                userInput.focus();
+                // 一边接收一边渲染
+                aiDiv.innerHTML = aiText.replace(/\n/g, "<br>");
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
+
+        } catch (err) {
+            aiDiv.innerHTML = "❌ 服务器流式响应失败：" + err.message;
         }
-    </script>
+
+        isSending = false;
+        userInput.disabled = false;
+        userInput.focus();
+    }
+</script>
+
 </body>
 </html>
+
 
 
 
