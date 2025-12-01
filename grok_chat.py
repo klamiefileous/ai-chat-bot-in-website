@@ -1,37 +1,22 @@
 import requests
 import json
-import os # 导入 os 模块，用于读取环境变量
+import os 
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# ===============================================
-# 1. 配置和初始化
-# ===============================================
 
-# 从 Render 环境变量中获取 API Key。
-# 注意：Render 中设置的 Key 必须命名为 GROK_API_KEY
 API_KEY = os.environ.get("GROK_API_KEY") 
-
-# 如果在本地测试，可以取消注释下面两行，使用硬编码的 Key：
-# if not API_KEY:
-#     API_KEY = "sk-or-v1-xxxxxxxxxxxxxxxxx" # 替换为您的真实 Key
 
 GROK_MODEL = "x-ai/grok-4.1-fast:free" 
 
-# 初始化 Flask 应用
+
 app = Flask(__name__)
-# 启用 CORS，允许前端（如 Netlify）访问
+
 CORS(app) 
 
-# ===============================================
-# 2. 核心 Grok API 调用函数
-# ===============================================
-
 def ask_grok(question):
-    """
-    负责调用 OpenRouter 上的 Grok API 获取回复。
-    """
+
     if not API_KEY:
         return "错误：API 密钥未设置或未从环境变量中读取。"
 
@@ -67,9 +52,6 @@ def ask_grok(question):
         return "抱歉，网络连接失败或超时。"
 
 
-# ===============================================
-# 3. Flask API 路由
-# ===============================================
 
 @app.route('/api/chat', methods=['POST'])
 def handle_chat():
@@ -95,10 +77,8 @@ def handle_chat():
     })
 
 
-# ===============================================
-# 4. 运行 Flask 应用 (Render 部署不需要这个 if 块，但本地测试需要)
-# ===============================================
 if __name__ == '__main__':
     print("Flask Grok API Server is starting...")
     # 注意：在本地运行时，如果未设置环境变量，此应用可能无法调用 API。
     app.run(debug=True, port=5000)
+
