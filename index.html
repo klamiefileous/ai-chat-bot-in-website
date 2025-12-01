@@ -5,21 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AiKang AI service</title>
     <style>
+        /* ==================== 1. 聊天图标（固定在右下角） ==================== */
         .chat-icon {
             position: fixed; 
-            bottom: 20px;    
-            right: 20px;     
-            width: 60px;     
-            height: 60px;    
+            bottom: 20px;    
+            right: 20px;     
+            width: 60px;     
+            height: 60px;    
             background-color: #4CAF50; 
-            color: white;              
-            border-radius: 50%;        
+            color: white;              
+            border-radius: 50%;        
             text-align: center;
             line-height: 60px;
             font-size: 24px;
-            cursor: pointer;           
+            cursor: pointer;           
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
-            z-index: 1000;             
+            z-index: 1000;             
             transition: transform 0.3s ease;
             font-family: Arial, sans-serif;
         }
@@ -28,6 +29,7 @@
             transform: scale(1.05); 
         }
 
+        /* ==================== 2. 聊天对话框样式 ==================== */
         .chat-window {
             position: fixed;
             bottom: 100px; 
@@ -43,7 +45,8 @@
             flex-direction: column;
             overflow: hidden;
         }
-
+        
+        /* 标题栏 */
         .chat-header {
             background-color: #4CAF50;
             color: white;
@@ -55,6 +58,7 @@
             align-items: center;
         }
 
+        /* 关闭按钮 */
         .close-btn {
             color: white;
             font-size: 24px;
@@ -62,13 +66,15 @@
             line-height: 1;
         }
 
+        /* 聊天内容区域 */
         .chat-body {
             flex-grow: 1;
             padding: 15px;
             overflow-y: auto; 
             background-color: #f7f7f7;
         }
-
+        
+        /* 聊天输入框 */
         .chat-input {
             padding: 10px;
             border-top: 1px solid #eee;
@@ -90,8 +96,16 @@
             padding: 8px 15px;
             border-radius: 4px;
             cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        
+        /* 禁用时的样式 */
+        .chat-input button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
+        /* 示例聊天气泡样式 */
         .message {
             margin-bottom: 10px;
             padding: 8px;
@@ -112,6 +126,25 @@
             float: left;
             margin-right: auto;
         }
+        
+        /* 闪烁光标效果 (用于流式回复中) */
+        .ai-message:not(.completed)::after {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1em; 
+            background-color: black;
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+        }
+        .ai-message.completed::after {
+            display: none; /* 完成后移除光标 */
+        }
+        @keyframes blink {
+            from, to { visibility: hidden; }
+            50% { visibility: visible; }
+        }
+
     </style>
 </head>
 <body>
@@ -126,92 +159,151 @@
             <span class="close-btn" id="closeBtn">&times;</span>
         </div>
         <div class="chat-body" id="chatBody">
-            <div class="message ai-message">Hello! I'm AiKang AI Service, May I ask how I can assist you?</div>
+            <!-- 欢迎语：使用 completed 标记防止流式光标出现 -->
+            <div class="message ai-message completed">您好！我是 AiKang AI 客服，请问有什么可以帮您？</div>
         </div>
         <div class="chat-input">
-           <input type="text" id="userInput" placeholder="Please enter your question...">
-           <button onclick="sendMessage()">Send</button>
+            <!-- 确保按钮和输入框有 ID，以便在 JS 中精确控制状态 -->
+            <input type="text" id="userInput" placeholder="请输入您的问题..." disabled>
+            <button onclick="sendMessage()" id="sendButton" disabled>发送</button>
         </div>
     </div>
 
     <script>
+        
+        // 🚨 已修正：使用您提供的 Render 地址作为 API URL
+        const API_URL = 'https://ai-chat-bot-in-website.onrender.com/api/chat'; 
+        
+        // --- 元素和状态 ---
         const chatIcon = document.getElementById('chatIcon');
         const chatWindow = document.getElementById('chatWindow');
         const closeBtn = document.getElementById('closeBtn');
         const chatBody = document.getElementById('chatBody');
         const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        let isWaitingForResponse = false; 
 
-        let isSending = false;
+        // --- 初始化和状态控制 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setInputState(true); 
+        });
+        
+        function setInputState(enabled) {
+            userInput.disabled = !enabled;
+            sendButton.disabled = !enabled;
+            isWaitingForResponse = !enabled;
+            if (enabled) {
+                userInput.focus();
+            }
+        }
 
+        // --- 事件监听器 ---
         chatIcon.addEventListener('click', () => {
             chatWindow.style.display = 'flex';
-            userInput.focus();
+            userInput.focus(); 
         });
 
         closeBtn.addEventListener('click', () => {
             chatWindow.style.display = 'none';
         });
 
-        userInput.addEventListener('keypress', e => {
-            if (e.key === 'Enter') sendMessage();
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !isWaitingForResponse) {
+                sendMessage();
+            }
         });
-
-        function appendMessage(text, className) {
-            const div = document.createElement('div');
-            div.className = `message ${className}`;
-            div.innerHTML = text;
-            chatBody.appendChild(div);
-            chatBody.scrollTop = chatBody.scrollHeight;
-            return div;
+        
+        // --- 辅助函数：添加消息到聊天体 ---
+        function appendMessage(text, className, isStreaming = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            
+            if (!isStreaming) {
+                messageDiv.classList.add('completed');
+                // 使用 innerHTML 处理换行
+                messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+            }
+            
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight; 
+            return messageDiv; 
         }
 
+        // --- 核心函数：发送消息并处理流式回复 (Async) ---
         async function sendMessage() {
-            if (isSending) return;
+            const messageText = userInput.value.trim();
+            if (messageText === '' || isWaitingForResponse) return;
 
-            const text = userInput.value.trim();
-            if (!text) return;
-
-            isSending = true;
-            userInput.disabled = true;
-
-            appendMessage(text, "user-message");
+            // 1. 显示用户消息
+            appendMessage(messageText, 'user-message');
             userInput.value = '';
 
-            const aiDiv = appendMessage("", "ai-message");
+            // 2. 禁用输入，开始等待
+            setInputState(false);
 
+            // 3. 准备 AI 消息元素 (流式输出容器)
+            const aiMessageDiv = appendMessage('', 'ai-message', true); 
+            
             try {
-                const response = await fetch("https://aichatinwebsite.netlify.app/api/chat", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({ message: text })
+                // 4. 发起请求
+                const response = await fetch(API_URL, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: messageText })
                 });
 
+                // 5. 检查 HTTP 状态（后端可能返回 400 或 500）
                 if (!response.ok) {
-                    throw new Error("HTTP error " + response.status);
+                    // 读取后端返回的错误信息（纯文本）
+                    const errorText = await response.text();
+                    
+                    // 构造更清晰的错误消息
+                    const errorMessage = `❌ 服务器错误 (${response.status})。请检查 Grok API 密钥或 Render 日志。详情：${errorText.substring(0, 150)}...`;
+                    throw new Error(errorMessage);
                 }
-
+                
+                // 6. 获取流式读取器
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder("utf-8");
-                let aiText = "";
-
+                
+                let accumulatedText = '';
+                
+                // 7. 循环读取数据块并实时显示
                 while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
+                    const { value, done } = await reader.read();
+                    if (done) {
+                        break; // 数据读取完毕
+                    }
+                    
                     const chunk = decoder.decode(value, { stream: true });
-                    aiText += chunk;
-
-                    aiDiv.innerHTML = aiText.replace(/\n/g, "<br>");
-                    chatBody.scrollTop = chatBody.scrollHeight;
+                    accumulatedText += chunk;
+                    
+                    // 实时更新 HTML 内容，并用 <br> 处理换行
+                    aiMessageDiv.innerHTML = accumulatedText.replace(/\n/g, '<br>');
+                    
+                    // 确保滚动条始终在底部
+                    chatBody.scrollTop = chatBody.scrollHeight; 
                 }
+                
+                // 8. 流式传输完成后，移除光标动画
+                aiMessageDiv.classList.add('completed');
 
-            } catch (err) {
-                aiDiv.innerHTML = "❌ Server streaming response failed: " + err.message;
+            } catch (error) {
+                console.error('API 调用或网络连接失败:', error);
+                
+                // 处理网络/CORS/DNS 错误 (Failed to fetch) 或自定义的服务器错误
+                const displayError = error.message.includes('Failed to fetch') 
+                    ? '❌ 网络连接失败或 CORS 错误。请确认 Render 服务正在运行，API URL 正确，且没有浏览器安全限制。'
+                    : error.message;
+
+                // 将错误信息写入 AI 消息元素
+                aiMessageDiv.innerHTML = displayError;
+                aiMessageDiv.classList.add('completed'); 
+
+            } finally {
+                // 9. 恢复输入状态
+                setInputState(true);
             }
-
-            isSending = false;
-            userInput.disabled = false;
-            userInput.focus();
         }
     </script>
 </body>
