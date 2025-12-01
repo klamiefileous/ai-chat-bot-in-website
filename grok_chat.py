@@ -1,11 +1,11 @@
-import requests
+import requests 
 import json
 import os
 from flask import Flask, request, Response
 from flask_cors import CORS
 
 # --- 配置 ---
-# 从 Render 环境变量中获取 API 密钥
+# 从环境变量中获取 API 密钥
 API_KEY = os.environ.get("GROK_API_KEY") 
 GROK_MODEL = "x-ai/grok-4.1-fast:free" 
 
@@ -47,7 +47,6 @@ def ask_grok(question):
             print(f"API Error Details (Non-Streaming): {response.text}")
             # 返回错误信息（非流式）
             return f"错误：API 调用失败，状态码 {response.status_code}。详情：{response.text}"
-
 
         # --- 生成器函数：实时处理和发送流数据 ---
         def generate():
