@@ -5,19 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AiKang AI service</title>
     <style>
-        /* 强制覆盖定位和颜色 */
+        /* CSS 样式块保留所有非定位和非颜色样式 */
 
-        /* 使用ID选择器提高优先级，并强制ltr方向 */
-        #chatIcon {
-            position: fixed !important; 
-            bottom: 20px !important;    
-            right: 20px !important;    
-            left: auto !important; /* 明确禁用左侧定位 */
-            direction: ltr !important; /* 强制左到右方向 */
+        /* ==================== 1. 聊天图标（基础样式） ==================== */
+        .chat-icon {
+            /* 定位和颜色已移至内联 style 属性 */
             width: 60px;     
             height: 60px;    
-            background-color: #4CAF50 !important; 
-            color: white;              
             border-radius: 50%;        
             text-align: center;
             line-height: 60px;
@@ -33,13 +27,9 @@
             transform: scale(1.05); 
         }
 
-        /* 强制覆盖定位和颜色 */
-        #chatWindow {
-            position: fixed !important;
-            bottom: 100px !important; 
-            right: 20px !important; 
-            left: auto !important; /* 明确禁用左侧定位 */
-            direction: ltr !important; /* 强制左到右方向 */
+        /* ==================== 2. 聊天对话框样式 ==================== */
+        .chat-window {
+            /* 定位已移至内联 style 属性 */
             width: 350px;
             height: 450px;
             background-color: white;
@@ -54,7 +44,7 @@
         
         /* 标题栏 */
         .chat-header {
-            background-color: #4CAF50 !important; 
+            /* 颜色已移至内联 style 属性 */
             color: white;
             padding: 15px;
             font-size: 16px;
@@ -96,7 +86,7 @@
         }
 
         .chat-input button {
-            background-color: #4CAF50 !important; 
+            /* 颜色已移至内联 style 属性 */
             color: white;
             border: none;
             padding: 8px 15px;
@@ -155,12 +145,29 @@
 </head>
 <body>
 
-    <div class="chat-icon" id="chatIcon">
+    <!-- Chat Icon - 使用内联样式确保定位和颜色 -->
+    <div class="chat-icon" id="chatIcon" 
+         style="
+             position: fixed !important; 
+             bottom: 20px !important;    
+             right: 20px !important;    
+             left: auto !important; 
+             background-color: #4CAF50 !important;
+             direction: ltr !important; 
+         ">
         💬
     </div>
 
-    <div class="chat-window" id="chatWindow">
-        <div class="chat-header">
+    <!-- Chat Window - 使用内联样式确保定位 -->
+    <div class="chat-window" id="chatWindow"
+         style="
+             position: fixed !important; 
+             bottom: 100px !important; 
+             right: 20px !important; 
+             left: auto !important; 
+             direction: ltr !important;
+         ">
+        <div class="chat-header" style="background-color: #4CAF50 !important;">
             <span>AiKang AI Service</span>
             <span class="close-btn" id="closeBtn">&times;</span>
         </div>
@@ -169,7 +176,7 @@
         </div>
         <div class="chat-input">
             <input type="text" id="userInput" placeholder="请输入您的问题..." disabled>
-            <button onclick="sendMessage()" id="sendButton" disabled>发送</button>
+            <button onclick="sendMessage()" id="sendButton" disabled style="background-color: #4CAF50 !important;">发送</button>
         </div>
     </div>
 
