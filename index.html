@@ -9,7 +9,7 @@
         .chat-icon {
             position: fixed; 
             bottom: 20px;    
-            right: 20px;     
+            right: 20px;     /* 确保在右侧 */
             width: 60px;     
             height: 60px;    
             background-color: #4CAF50; 
@@ -33,7 +33,7 @@
         .chat-window {
             position: fixed;
             bottom: 100px; 
-            right: 20px;
+            right: 20px; /* 确保在右侧，与图标对齐 */
             width: 350px;
             height: 450px;
             background-color: white;
@@ -159,11 +159,9 @@
             <span class="close-btn" id="closeBtn">&times;</span>
         </div>
         <div class="chat-body" id="chatBody">
-            <!-- 欢迎语：使用 completed 标记防止流式光标出现 -->
             <div class="message ai-message completed">您好！我是 AiKang AI 客服，请问有什么可以帮您？</div>
         </div>
         <div class="chat-input">
-            <!-- 确保按钮和输入框有 ID，以便在 JS 中精确控制状态 -->
             <input type="text" id="userInput" placeholder="请输入您的问题..." disabled>
             <button onclick="sendMessage()" id="sendButton" disabled>发送</button>
         </div>
@@ -171,7 +169,7 @@
 
     <script>
         
-        // 🚨 已修正：使用您提供的 Render 地址作为 API URL
+        // Render API URL
         const API_URL = 'https://ai-chat-bot-in-website.onrender.com/api/chat'; 
         
         // --- 元素和状态 ---
@@ -220,7 +218,6 @@
             
             if (!isStreaming) {
                 messageDiv.classList.add('completed');
-                // 使用 innerHTML 处理换行
                 messageDiv.innerHTML = text.replace(/\n/g, '<br>');
             }
             
@@ -254,11 +251,8 @@
 
                 // 5. 检查 HTTP 状态（后端可能返回 400 或 500）
                 if (!response.ok) {
-                    // 读取后端返回的错误信息（纯文本）
                     const errorText = await response.text();
-                    
-                    // 构造更清晰的错误消息
-                    const errorMessage = `❌ 服务器错误 (${response.status})。请检查 Grok API 密钥或 Render 日志。详情：${errorText.substring(0, 150)}...`;
+                    const errorMessage = `❌ 服务器错误 (${response.status})。详情：${errorText.substring(0, 150)}...`;
                     throw new Error(errorMessage);
                 }
                 
@@ -291,9 +285,8 @@
             } catch (error) {
                 console.error('API 调用或网络连接失败:', error);
                 
-                // 处理网络/CORS/DNS 错误 (Failed to fetch) 或自定义的服务器错误
                 const displayError = error.message.includes('Failed to fetch') 
-                    ? '❌ 网络连接失败或 CORS 错误。请确认 Render 服务正在运行，API URL 正确，且没有浏览器安全限制。'
+                    ? '❌ 网络连接失败或 CORS 错误。请确认 Render 服务正在运行。'
                     : error.message;
 
                 // 将错误信息写入 AI 消息元素
