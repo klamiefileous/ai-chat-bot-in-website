@@ -7,12 +7,12 @@
     <style>
         /* ==================== 1. 聊天图标（固定在右下角） ==================== */
         .chat-icon {
-            position: fixed; 
-            bottom: 20px;    
-            right: 20px;     /* 确保在右侧 */
+            position: fixed !important; /* 确保定位模式 */
+            bottom: 20px !important;    
+            right: 20px !important;     /* 强制在右侧 */
             width: 60px;     
             height: 60px;    
-            background-color: #4CAF50; 
+            background-color: #4CAF50 !important; /* 强制绿色 */
             color: white;              
             border-radius: 50%;        
             text-align: center;
@@ -31,9 +31,9 @@
 
         /* ==================== 2. 聊天对话框样式 ==================== */
         .chat-window {
-            position: fixed;
-            bottom: 100px; 
-            right: 20px; /* 确保在右侧，与图标对齐 */
+            position: fixed !important;
+            bottom: 100px !important; 
+            right: 20px !important; /* 强制在右侧，与图标对齐 */
             width: 350px;
             height: 450px;
             background-color: white;
@@ -48,7 +48,7 @@
         
         /* 标题栏 */
         .chat-header {
-            background-color: #4CAF50;
+            background-color: #4CAF50 !important; /* 强制绿色 */
             color: white;
             padding: 15px;
             font-size: 16px;
@@ -90,7 +90,7 @@
         }
 
         .chat-input button {
-            background-color: #4CAF50;
+            background-color: #4CAF50 !important; /* 强制绿色 */
             color: white;
             border: none;
             padding: 8px 15px;
