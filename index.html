@@ -8,24 +8,27 @@
         /* CSS 样式块保留所有非定位和非颜色样式 */
 
         /* ==================== 1. 聊天图标（基础样式） ==================== */
-        .chat-icon {
-            /* 定位和颜色已移至内联 style 属性 */
-            width: 60px;     
-            height: 60px;    
-            border-radius: 50%;        
-            text-align: center;
-            line-height: 60px;
-            font-size: 24px;
-            cursor: pointer;           
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
-            z-index: 1000;             
-            transition: transform 0.3s ease;
-            font-family: Arial, sans-serif;
-        }
+       <style>
+    /* 修改聊天图标按钮 */
+    .chat-icon {
+        width: 60px;     
+        height: 60px;     
+        border-radius: 50%;   /* 圆形按钮 */
+        text-align: center;
+        line-height: 60px;  /* 垂直居中 */
+        font-size: 32px;    /* 图标字体大小可以适当增大 */
+        cursor: pointer;         
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+        z-index: 1000;         
+        transition: transform 0.3s ease;
+        background-color: #4CAF50; /* 按钮颜色 */
+    }
 
-        .chat-icon:hover {
-            transform: scale(1.05); 
-        }
+
+      .chat-icon:hover {
+        transform: scale(1.05); 
+    }
+</style>
 
         /* ==================== 2. 聊天对话框样式 ==================== */
         .chat-window {
@@ -146,8 +149,8 @@
 <body>
 
 <div class="chat-icon" id="chatIcon" 
-         style="position: fixed !important; bottom: 20px !important; right: 20px !important; background-color: #4CAF50 !important; direction: ltr !important;">
-        💬
+     style="position: fixed !important; bottom: 20px !important; right: 20px !important; direction: ltr !important;">
+    💬
 </div>
 
   <div class="chat-window" id="chatWindow"
@@ -299,4 +302,5 @@
     </script>
 </body>
 </html>
+
 
