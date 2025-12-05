@@ -14,7 +14,6 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 API_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # ⚠️ 修复：切换到 OpenRouter 上更稳定且常用的免费模型 Mistral 7B Instruct。
-# 原 Grok 模型 x-ai/grok-4.1-fast:free 已不可用。
 MODEL_NAME = "mistralai/mistral-7b-instruct:free" 
 
 # ----------------- 核心流式聊天路由 -----------------
@@ -39,7 +38,8 @@ def chat_stream():
         payload = {
             "model": MODEL_NAME,
             "messages": [
-                {"role": "system", "content": "你是一个友好、乐于助人的中文 AI 客服，请使用中文简洁回复。"},
+                # 增强 System 提示，要求模型必须回复
+                {"role": "system", "content": "你是一个友好、乐于助人的中文 AI 客服，请使用中文简洁回复。你的回复必须专业且富有建设性，绝对不能返回空内容。"},
                 {"role": "user", "content": user_message}
             ],
             "stream": True # 开启流式传输
