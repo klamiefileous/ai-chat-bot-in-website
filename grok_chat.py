@@ -38,8 +38,8 @@ def chat_stream():
         payload = {
             "model": MODEL_NAME,
             "messages": [
-                # 增强 System 提示，要求模型必须回复
-                {"role": "system", "content": "你是一个友好、乐于助人的中文 AI 客服，请使用中文简洁回复。你的回复必须专业且富有建设性，绝对不能返回空内容。"},
+                # 增强 System 提示，要求模型必须使用【英文】回复
+                {"role": "system", "content": "You are a friendly and helpful AI customer service agent. Please reply concisely and professionally, and your responses MUST BE IN ENGLISH. Never return empty content."},
                 {"role": "user", "content": user_message}
             ],
             "stream": True # 开启流式传输
