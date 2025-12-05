@@ -53,36 +53,46 @@ def chat_stream():
         }
 
         # 发起流式请求
-        # stream=True 是 requests 库用于处理流式响应的关键
         response = requests.post(API_BASE_URL, headers=headers, json=payload, stream=True)
 
         # 检查 API 响应状态码
         if response.status_code != 200:
-            # 如果 OpenRouter 返回非 200，记录错误详情并向前端返回 500 错误
             error_data = response.text
             app.logger.error(f"OpenRouter API 调用失败，状态码 {response.status_code}。详情：{error_data}")
-            
-            # 向前端返回 500 错误，包含 API 错误信息
             return Response(
                 f"❌ Grok API 调用失败，状态码 {response.status_code}。详情：{error_data}", 
                 status=500, 
                 mimetype='text/plain'
             )
 
-        # 成功：定义生成器函数，用于流式发送数据给前端
-        def generate():
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    # OpenRouter 返回的是 SSE (Server-Sent Events) 格式，我们需要原样转发
-                    # 每个 chunk 通常以 data: {json_payload} 结束
-                    try:
-                        yield chunk
-                    except Exception as e:
-                        app.logger.error(f"在流式传输中发生错误: {e}")
-                        break
+        # 核心修复：解析 SSE 数据流，只转发纯文本内容
+        def generate_text_stream():
+            # 使用 response.iter_lines() 确保按行处理数据
+            for line in response.iter_lines():
+                if line:
+                    decoded_line = line.decode('utf-8')
+                    if decoded_line.startswith('data: '):
+                        data_part = decoded_line[6:].strip()
+                        
+                        # 检查是否是结束标记
+                        if data_part == '[DONE]':
+                            break
+                        
+                        try:
+                            chunk = json.loads(data_part)
+                            # 提取模型生成的文本片段
+                            content = chunk['choices'][0]['delta'].get('content', '')
+                            if content:
+                                yield content
+                        except json.JSONDecodeError:
+                            # 忽略无法解析的行
+                            continue
+                    
+            # 确保流结束
+            yield ''
 
-        # 返回流式响应
-        return Response(generate(), mimetype='text/event-stream')
+        # 返回流式响应，这次只包含纯文本
+        return Response(generate_text_stream(), mimetype='text/plain')
 
     except Exception as e:
         app.logger.error(f"服务器处理请求时发生未知错误: {e}")
