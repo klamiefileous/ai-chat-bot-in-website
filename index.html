@@ -5,26 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AiKang AI service</title>
     <style>
-        /* ==================== 1. 聊天图标（基础样式） ==================== */
         .chat-icon {
             width: 60px;     
             height: 60px;     
-            border-radius: 50%;   /* 圆形按钮 */
+            border-radius: 50%;   
             text-align: center;
-            line-height: 60px;  /* 垂直居中 */
-            font-size: 32px;    /* 图标字体大小 */
+            line-height: 60px;  
+            font-size: 32px;    
             cursor: pointer;         
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
             z-index: 1000;         
             transition: transform 0.3s ease;
-            background-color: #4CAF50; /* 按钮颜色 */
+            background-color: #4CAF50; 
         }
 
         .chat-icon:hover {
             transform: scale(1.05); 
         }
 
-        /* ==================== 2. 聊天对话框样式 ==================== */
         .chat-window {
             width: 350px;
             height: 450px;
@@ -38,7 +36,6 @@
             overflow: hidden;
         }
         
-        /* 标题栏 */
         .chat-header {
             color: white;
             padding: 15px;
@@ -49,7 +46,6 @@
             align-items: center;
         }
 
-        /* 关闭按钮 */
         .close-btn {
             color: white;
             font-size: 24px;
@@ -57,7 +53,6 @@
             line-height: 1;
         }
 
-        /* 聊天内容区域 */
         .chat-body {
             flex-grow: 1;
             padding: 15px;
@@ -65,7 +60,6 @@
             background-color: #f7f7f7;
         }
         
-        /* 聊天输入框 */
         .chat-input {
             padding: 10px;
             border-top: 1px solid #eee;
@@ -90,13 +84,11 @@
             background-color: #4CAF50;
         }
         
-        /* 禁用时的样式 */
         .chat-input button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
 
-        /* 示例聊天气泡样式 */
         .message {
             margin-bottom: 10px;
             padding: 8px;
@@ -118,7 +110,6 @@
             margin-right: auto;
         }
         
-        /* 闪烁光标效果 (用于流式回复中) */
         .ai-message:not(.completed)::after {
             content: '';
             display: inline-block;
@@ -129,7 +120,7 @@
             animation: blink 1s step-end infinite;
         }
         .ai-message.completed::after {
-            display: none; /* 完成后移除光标 */
+            display: none; 
         }
         @keyframes blink {
             from, to { visibility: hidden; }
@@ -165,7 +156,6 @@
         // Render API URL
         const API_URL = 'https://ai-chat-bot-in-website.onrender.com/api/chat'; 
         
-        // --- 元素和状态 --- 
         const chatIcon = document.getElementById('chatIcon');
         const chatWindow = document.getElementById('chatWindow');
         const closeBtn = document.getElementById('closeBtn');
@@ -174,7 +164,6 @@
         const sendButton = document.getElementById('sendButton');
         let isWaitingForResponse = false; 
 
-        // --- 初始化和状态控制 --- 
         document.addEventListener('DOMContentLoaded', () => {
             setInputState(true); 
         });
@@ -188,7 +177,6 @@
             }
         }
 
-        // --- 事件监听器 --- 
         chatIcon.addEventListener('click', () => {
             chatWindow.style.display = 'flex';
             userInput.focus(); 
@@ -204,7 +192,6 @@
             }
         });
 
-        // --- 辅助函数：添加消息到聊天体 --- 
         function appendMessage(text, className, isStreaming = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${className}`;
@@ -224,56 +211,46 @@
             const messageText = userInput.value.trim();
             if (messageText === '' || isWaitingForResponse) return;
 
-            // 1. 显示用户消息
             appendMessage(messageText, 'user-message');
             userInput.value = '';
 
-            // 2. 禁用输入，开始等待
             setInputState(false);
 
-            // 3. 准备 AI 消息元素 (流式输出容器)
             const aiMessageDiv = appendMessage('', 'ai-message', true); 
             
             try {
-                // 4. 发起请求
                 const response = await fetch(API_URL, { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: messageText })
                 });
 
-                // 5. 检查 HTTP 状态（后端可能返回 400 或 500）
                 if (!response.ok) {
                     const errorText = await response.text();
                     const errorMessage = `❌ 服务器错误 (${response.status})。详情：${errorText.substring(0, 150)}...`;
                     throw new Error(errorMessage);
                 }
                 
-                // 6. 获取流式读取器
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder("utf-8");
                 
                 let accumulatedText = '';
                 
             
-                // 7. 循环读取数据块并实时显示
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) {
-                        break; // 数据读取完毕
+                        break; 
                     }
                     
                     const chunk = decoder.decode(value, { stream: true });
                     accumulatedText += chunk;
                     
-                    // 实时更新 HTML 内容，并用 <br> 处理换行
                     aiMessageDiv.innerHTML = accumulatedText.replace(/\n/g, '<br>');
                     
-                    // 确保滚动条始终在底部
                     chatBody.scrollTop = chatBody.scrollHeight; 
                 }
                 
-                // 8. 流式传输完成后，移除光标动画
                 aiMessageDiv.classList.add('completed');
 
             } catch (error) {
@@ -283,18 +260,17 @@
                     ? '❌ 网络连接失败或 CORS 错误。请确认 Render 服务正在运行。'
                     : error.message;
 
-                // 将错误信息写入 AI 消息元素
                 aiMessageDiv.innerHTML = displayError;
                 aiMessageDiv.classList.add('completed'); 
 
             } finally {
-                // 9. 恢复输入状态
                 setInputState(true);
             }
         }
     </script>
 </body>
 </html>
+
 
 
 
