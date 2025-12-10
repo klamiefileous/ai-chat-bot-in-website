@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AiKang AI service</title>
     <style>
+       
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
         .chat-icon {
             width: 60px;      
             height: 60px;      
@@ -95,6 +102,7 @@
             border-radius: 5px;
             max-width: 80%;
             clear: both;  
+            text-decoration: none !important;
         }
 
         .user-message {
@@ -130,15 +138,13 @@
 </head>
 <body>
 
-    <!-- Chat Icon - 使用内联样式确保定位和颜色 -->
     <div class="chat-icon" id="chatIcon" 
-        style="position: fixed !important; bottom: 20px !important; right: 20px !important; direction: ltr !important;">
+        style="position: fixed !important; bottom: 20px !important; right: 20px !important;">
         💬
     </div>
 
-    <!-- Chat Window - 使用内联样式确保定位 -->
     <div class="chat-window" id="chatWindow"
-        style="position: fixed !important; bottom: 100px !important; right: 20px !important; direction: ltr !important;">
+        style="position: fixed !important; bottom: 100px !important; right: 20px !important;">
         <div class="chat-header" style="background-color: #4CAF50 !important;">
             <span>AiKang AI Service</span>
             <span class="close-btn" id="closeBtn">&times;</span>
@@ -215,7 +221,9 @@
 
             setInputState(false);
 
-            const aiMessageDiv = appendMessage('', 'ai-message', true); 
+            const aiMessageDiv = appendMessage('', 'ai-message', true);
+            aiMessageDiv.innerHTML = '...Connecting and thinking...'; 
+            chatBody.scrollTop = chatBody.scrollHeight;
             
             try {
                 const response = await fetch(API_URL, { 
@@ -265,10 +273,8 @@
                 if (error.message.includes('Failed to fetch')) {
                     displayError = '❌ Network connection failed or CORS error. Please check if the Render service is running.';
                 } else if (error.message.includes('Server Error')) {
-                    // This handles non-friendly server errors from the `if (!response.ok)` block
                     displayError = `❌ Server error occurred: ${error.message}`;
                 } else if (error.message.includes('Sorry, something went wrong')) {
-                    // This handles the friendly message sent by the backend (429 failure)
                     displayError = 'Sorry, the service is currently too busy. Please try again in a few moments.';
                 }
 
