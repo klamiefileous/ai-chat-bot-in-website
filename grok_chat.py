@@ -1,7 +1,7 @@
 import os
 import requests
 import json
-import time # 
+import time 
 from flask import Flask, request, Response
 from flask_cors import CORS
 
@@ -11,9 +11,7 @@ CORS(app)
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 API_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-
 MODEL_NAME = "mistralai/mistral-7b-instruct:free"
-
 
 MAX_RETRIES = 2
 RETRY_DELAY_SECONDS = 5
@@ -21,7 +19,6 @@ FRIENDLY_ERROR_MESSAGE = "Sorry, something went wrong, please try again. The ser
 
 
 def generate_payload(user_message):
-    
     return {
         "model": MODEL_NAME,
         "messages": [
@@ -32,7 +29,7 @@ def generate_payload(user_message):
     }
 
 def generate_headers():
-    
+    """构建请求头"""
     return {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
@@ -42,7 +39,7 @@ def generate_headers():
 
 @app.route("/api/chat", methods=["POST"])
 def chat_stream():
-   
+ 
     if not OPENROUTER_API_KEY:
         app.logger.error("OPENROUTER_API_KEY 环境变量未设置。")
         return "❌ 后端配置错误：缺少 API 密钥。", 500
@@ -54,7 +51,7 @@ def chat_stream():
         if not user_message:
             return "❌ 请求体缺少 'message' 字段。", 400
         
-        
+        response = None
         for attempt in range(MAX_RETRIES):
             try:
                 response = requests.post(
@@ -65,13 +62,14 @@ def chat_stream():
                 )
 
                 if response.status_code == 200:
+                    # 成功，跳出重试循环
                     break
 
                 elif response.status_code == 429:
                     app.logger.warning(f"OpenRouter 速率限制 (429)。尝试 {attempt + 1}/{MAX_RETRIES}。等待 {RETRY_DELAY_SECONDS} 秒后重试...")
                     if attempt < MAX_RETRIES - 1:
-                        time.sleep(RETRY_DELAY_SECONDS) 
-                        continue 
+                        time.sleep(RETRY_DELAY_SECONDS) # 暂停等待
+                        continue # 继续下一次循环，重试请求
                     else:
                         raise requests.exceptions.HTTPError(f"Maximum retries reached for 429 error.")
 
@@ -86,32 +84,41 @@ def chat_stream():
                     time.sleep(RETRY_DELAY_SECONDS)
                     continue
                 else:
-                    raise 
+                    raise # 抛出网络错误，进入外部 catch 块
 
 
-        if response.status_code != 200:
+        if response is None or response.status_code != 200:
             raise Exception("API call failed after all retries.")
 
 
         def generate_text_stream():
-            for line in response.iter_lines():
-                if line:
-                    decoded_line = line.decode('utf-8')
-                    if decoded_line.startswith('data: '):
-                        data_part = decoded_line[6:].strip()
-                        
-                        if data_part == '[DONE]':
-                            break
-                        
-                        try:
-                            chunk = json.loads(data_part)
-                            content = chunk['choices'][0]['delta'].get('content', '')
-                            if content:
-                                yield content
-                        except json.JSONDecodeError:
-                            continue
-                
-            yield ''
+            try:
+                for line in response.iter_lines():
+                    if line:
+                        decoded_line = line.decode('utf-8')
+                        if decoded_line.startswith('data: '):
+                            data_part = decoded_line[6:].strip()
+                            
+                            if data_part == '[DONE]':
+                                break
+                            
+                            try:
+                                chunk = json.loads(data_part)
+                                content = chunk['choices'][0]['delta'].get('content', '')
+                                if content:
+                                    yield content
+                            except json.JSONDecodeError as e:
+                                app.logger.warning(f"JSON 解析错误，跳过该块: {e}, Data: {data_part[:50]}...")
+                                continue
+            
+                yield ''
+            except requests.exceptions.ChunkedEncodingError as e:
+                app.logger.error(f"流式传输中断错误 (ChunkedEncodingError): {e}")
+                yield ''
+            except Exception as e:
+                app.logger.error(f"流处理中发生未知错误: {e}")
+                yield ''
+
 
         return Response(generate_text_stream(), mimetype='text/plain')
 
