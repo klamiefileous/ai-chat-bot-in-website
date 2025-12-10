@@ -6,17 +6,17 @@
     <title>AiKang AI service</title>
     <style>
         .chat-icon {
-            width: 60px;     
-            height: 60px;     
-            border-radius: 50%;   
+            width: 60px;      
+            height: 60px;      
+            border-radius: 50%;    
             text-align: center;
             line-height: 60px;  
             font-size: 32px;    
-            cursor: pointer;         
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
-            z-index: 1000;         
+            cursor: pointer;          
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);  
+            z-index: 1000;          
             transition: transform 0.3s ease;
-            background-color: #4CAF50; 
+            background-color: #4CAF50;  
         }
 
         .chat-icon:hover {
@@ -56,7 +56,7 @@
         .chat-body {
             flex-grow: 1;
             padding: 15px;
-            overflow-y: auto; 
+            overflow-y: auto;  
             background-color: #f7f7f7;
         }
         
@@ -94,7 +94,7 @@
             padding: 8px;
             border-radius: 5px;
             max-width: 80%;
-            clear: both; 
+            clear: both;  
         }
 
         .user-message {
@@ -114,7 +114,7 @@
             content: '';
             display: inline-block;
             width: 4px;
-            height: 1em; 
+            height: 1em;  
             background-color: black;
             margin-left: 2px;
             animation: blink 1s step-end infinite;
@@ -132,13 +132,13 @@
 
     <!-- Chat Icon - 使用内联样式确保定位和颜色 -->
     <div class="chat-icon" id="chatIcon" 
-         style="position: fixed !important; bottom: 20px !important; right: 20px !important; direction: ltr !important;">
+        style="position: fixed !important; bottom: 20px !important; right: 20px !important; direction: ltr !important;">
         💬
     </div>
 
     <!-- Chat Window - 使用内联样式确保定位 -->
     <div class="chat-window" id="chatWindow"
-         style="position: fixed !important; bottom: 100px !important; right: 20px !important; direction: ltr !important;">
+        style="position: fixed !important; bottom: 100px !important; right: 20px !important; direction: ltr !important;">
         <div class="chat-header" style="background-color: #4CAF50 !important;">
             <span>AiKang AI Service</span>
             <span class="close-btn" id="closeBtn">&times;</span>
@@ -206,7 +206,6 @@
             return messageDiv; 
         }
 
-        // --- 核心函数：发送消息并处理流式回复 (Async) --- 
         async function sendMessage() {
             const messageText = userInput.value.trim();
             if (messageText === '' || isWaitingForResponse) return;
@@ -227,8 +226,13 @@
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    const errorMessage = `❌ 服务器错误 (${response.status})。详情：${errorText.substring(0, 150)}...`;
-                    throw new Error(errorMessage);
+                    
+                    if (response.status === 500 && errorText.includes('Sorry, something went wrong')) {
+                        throw new Error(errorText); 
+                    } else {
+                        const errorMessage = `Server Error (${response.status}). Details: ${errorText.substring(0, 150).trim()}...`;
+                        throw new Error(errorMessage);
+                    }
                 }
                 
                 const reader = response.body.getReader();
@@ -236,9 +240,9 @@
                 
                 let accumulatedText = '';
                 
-            
                 while (true) {
                     const { value, done } = await reader.read();
+                    
                     if (done) {
                         break; 
                     }
@@ -254,13 +258,21 @@
                 aiMessageDiv.classList.add('completed');
 
             } catch (error) {
-                console.error('API 调用或网络连接失败:', error);
+                console.error('API Call or Network Failure:', error);
                 
-                const displayError = error.message.includes('Failed to fetch') 
-                    ? '❌ 网络连接失败或 CORS 错误。请确认 Render 服务正在运行。'
-                    : error.message;
+                let displayError = error.message;
 
-                aiMessageDiv.innerHTML = displayError;
+                if (error.message.includes('Failed to fetch')) {
+                    displayError = '❌ Network connection failed or CORS error. Please check if the Render service is running.';
+                } else if (error.message.includes('Server Error')) {
+                    // This handles non-friendly server errors from the `if (!response.ok)` block
+                    displayError = `❌ Server error occurred: ${error.message}`;
+                } else if (error.message.includes('Sorry, something went wrong')) {
+                    // This handles the friendly message sent by the backend (429 failure)
+                    displayError = 'Sorry, the service is currently too busy. Please try again in a few moments.';
+                }
+
+                aiMessageDiv.innerHTML = displayError.replace(/\n/g, '<br>');
                 aiMessageDiv.classList.add('completed'); 
 
             } finally {
@@ -270,9 +282,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
